@@ -24,9 +24,8 @@ public class Bank {
     @Column(nullable = false)
     private String address;
 
-    @Column(nullable = false)
     @ManyToOne
-    @JoinColumn(name = "country_id")
+    @JoinColumn(name = "country_id", nullable = false)
     private Country country;
 
     @Column(nullable = false)

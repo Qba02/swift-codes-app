@@ -1,24 +1,26 @@
 package com.jn.swiftcodes.service;
 
-import com.jn.swiftcodes.dto.BankDetailsInterface;
-import com.jn.swiftcodes.dto.BranchDto;
-import com.jn.swiftcodes.dto.CountrySwiftCodesDto;
-import com.jn.swiftcodes.dto.HeadquarterDto;
+import com.jn.swiftcodes.dto.*;
 import com.jn.swiftcodes.model.Bank;
 import com.jn.swiftcodes.model.Country;
 import com.jn.swiftcodes.repository.BankRepository;
 import com.jn.swiftcodes.repository.CountryRepository;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class BankService {
     private final BankRepository bankRepository;
     private final CountryRepository countryRepository;
+
+    @Autowired
+    public BankService(BankRepository bankRepository, CountryRepository countryRepository){
+        this.bankRepository = bankRepository;
+        this.countryRepository = countryRepository;
+    }
 
     public BankDetailsInterface getBankDetails(String swiftCode){
         Bank bank = bankRepository.findBySwiftCode(swiftCode)
@@ -27,7 +29,7 @@ public class BankService {
         if(bank.isHeadquarter()){
             return mapToHeadquarter(bank, bankRepository.findByHeadquarters(bank));
         }else{
-            return mapToBranch(bank);
+            return mapToBank(bank);
         }
     }
 
@@ -42,22 +44,22 @@ public class BankService {
                 .countryISO2(country.getIso2())
                 .countryName(country.getName())
                 .swiftCodes(banks.stream()
-                        .map(this::mapToBranchWithoutCountryName)
+                        .map(this::mapToBranch)
                         .toList())
                 .build();
     }
 
     private HeadquarterDto mapToHeadquarter(Bank bank, List<Bank> branches){
         return HeadquarterDto.builder()
-                .bank(mapToBranchWithoutCountryName(bank))
+                .bank(mapToBank(bank))
                 .branches(branches.stream()
-                        .map(this::mapToBranchWithoutCountryName)
+                        .map(this::mapToBranch)
                         .toList())
                 .build();
     }
 
-    private BranchDto mapToBranch(Bank bank){
-        return BranchDto.builder()
+    private BankDto mapToBank(Bank bank){
+        return BankDto.builder()
                 .address(bank.getAddress())
                 .bankName(bank.getName())
                 .countryISO2(bank.getCountry().getIso2())
@@ -67,7 +69,7 @@ public class BankService {
                 .build();
     }
 
-    private BranchDto mapToBranchWithoutCountryName(Bank bank){
+    private BranchDto mapToBranch(Bank bank){
         return BranchDto.builder()
                 .address(bank.getAddress())
                 .bankName(bank.getName())

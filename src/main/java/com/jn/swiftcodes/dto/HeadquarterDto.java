@@ -6,6 +6,6 @@ import java.util.List;
 
 @Builder
 public record HeadquarterDto (
-        BranchDto bank,
+        BankDto bank,
         List<BranchDto> branches
 ) implements BankDetailsInterface { }

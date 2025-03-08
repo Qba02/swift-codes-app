@@ -3,7 +3,7 @@ package com.jn.swiftcodes.controller;
 import com.jn.swiftcodes.dto.BankDetailsInterface;
 import com.jn.swiftcodes.dto.CountrySwiftCodesDto;
 import com.jn.swiftcodes.service.BankService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,10 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/swift-codes")
-@RequiredArgsConstructor
 public class BankController {
 
     private final BankService bankService;
+
+    @Autowired
+    public BankController(BankService bankService) {
+        this.bankService = bankService;
+    }
 
     @GetMapping("/{swiftCode}")
     public ResponseEntity<BankDetailsInterface> getBankDetailsBySwiftCode(
