@@ -9,7 +9,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,7 +39,6 @@ public class SwiftCodesApplication implements CommandLineRunner {
 			csvParserService.saveDataFromCsvToDatabase(inputStream);
 			logger.log(Level.FINE, "Successfully saved CSV data to database");
 		} catch (Exception e) {
-			System.err.println("Error processing the CSV file: " + e.getMessage());
 			logger.log(Level.SEVERE, "Error processing the CSV file: " + e.getMessage());
 		}
 	}

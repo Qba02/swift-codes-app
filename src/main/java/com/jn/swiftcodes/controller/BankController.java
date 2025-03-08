@@ -1,14 +1,14 @@
 package com.jn.swiftcodes.controller;
 
 import com.jn.swiftcodes.dto.BankDetailsInterface;
+import com.jn.swiftcodes.dto.BankDto;
 import com.jn.swiftcodes.dto.CountrySwiftCodesDto;
+import com.jn.swiftcodes.dto.MessageResponseDto;
 import com.jn.swiftcodes.service.BankService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/swift-codes")
@@ -21,16 +21,26 @@ public class BankController {
         this.bankService = bankService;
     }
 
-    @GetMapping("/{swiftCode}")
+    @GetMapping("/{swift-code}")
     public ResponseEntity<BankDetailsInterface> getBankDetailsBySwiftCode(
-            @PathVariable String swiftCode){
+            @PathVariable("swift-code") String swiftCode){
         return ResponseEntity.ok(bankService.getBankDetails(swiftCode));
     }
 
-    @GetMapping("/country/{countryIso2Code}")
+    @GetMapping("/country/{countryISO2code}")
     public ResponseEntity<CountrySwiftCodesDto> getBanksByCountryIso2Code(
-            @PathVariable String countryIso2Code){
+            @PathVariable("countryISO2code") String countryIso2Code){
         return ResponseEntity.ok(bankService.getBanksByCountry(countryIso2Code));
+    }
+
+    @PostMapping("/")
+    public ResponseEntity<MessageResponseDto> createBank(@RequestBody BankDto bankDto){
+        return new ResponseEntity<>(bankService.saveBankEntry(bankDto), HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/{swift-code}")
+    public ResponseEntity<MessageResponseDto> deleteBankBySwiftCode(@PathVariable("swift-code") String swiftCode){
+        return ResponseEntity.ok(bankService.deleteBank(swiftCode));
     }
 
 }
