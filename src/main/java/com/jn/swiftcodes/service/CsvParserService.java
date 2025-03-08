@@ -6,13 +6,11 @@ import com.jn.swiftcodes.repository.BankRepository;
 import com.jn.swiftcodes.repository.CountryRepository;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -21,22 +19,29 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class CsvParserService {
 
     private final BankRepository bankRepository;
     private final CountryRepository countryRepository;
+
+    @Autowired
+    public CsvParserService(BankRepository bankRepository, CountryRepository countryRepository){
+        this.bankRepository = bankRepository;
+        this.countryRepository = countryRepository;
+    }
+
     private final List<Bank> banks = new ArrayList<>();
-    public void saveDataFromCsvToDatabase(File file) throws IOException, CsvException{
-        parseCsvData(file);
+    public void saveDataFromCsvToDatabase(InputStream inputStream) throws IOException, CsvException{
+        parseCsvData(inputStream);
         saveBanksToDatabase();
     }
 
-    private void parseCsvData(File file) throws IOException, CsvException{
+    private void parseCsvData(InputStream inputStream) throws IOException, CsvException{
 
         try (CSVReader reader = new CSVReader(new InputStreamReader(
-                new FileInputStream(file),
-                StandardCharsets.UTF_8))) {
+                inputStream,
+                StandardCharsets.UTF_8)))
+        {
             List<String[]> rows = reader.readAll();
 
             if (!rows.isEmpty()) {
@@ -80,11 +85,7 @@ public class CsvParserService {
 
         for (Bank branch : branches) {
             Bank hq = headquartersMap.get(branch.getSwiftCode().substring(0, 8));
-            if (hq != null) {
-                branch.setHeadquarters(hq);
-            } else {
-                throw new EntityNotFoundException("No headquarters found for branch");
-            }
+            branch.setHeadquarters(hq);
         }
 
         bankRepository.saveAll(branches);
