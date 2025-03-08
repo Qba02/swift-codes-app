@@ -1,6 +1,7 @@
 package com.jn.swiftcodes.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Entity
@@ -14,9 +15,11 @@ public class Country {
     @Setter(AccessLevel.NONE)
     private Long id;
 
+    @NotNull
     @Column(nullable = false, length = 2, unique = true)
     private String iso2;
 
+    @NotNull
     @Column(nullable = false, unique = true)
     private String name;
 

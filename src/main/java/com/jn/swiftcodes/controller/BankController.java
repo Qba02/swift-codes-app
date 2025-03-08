@@ -5,6 +5,7 @@ import com.jn.swiftcodes.dto.BankDto;
 import com.jn.swiftcodes.dto.CountrySwiftCodesDto;
 import com.jn.swiftcodes.dto.MessageResponseDto;
 import com.jn.swiftcodes.service.BankService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +35,7 @@ public class BankController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<MessageResponseDto> createBank(@RequestBody BankDto bankDto){
+    public ResponseEntity<MessageResponseDto> createBank(@RequestBody @Valid BankDto bankDto){
         return new ResponseEntity<>(bankService.saveBankEntry(bankDto), HttpStatus.CREATED);
     }
 

@@ -1,6 +1,7 @@
 package com.jn.swiftcodes.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Entity
@@ -15,9 +16,11 @@ public class Bank {
     @Setter(AccessLevel.NONE)
     private Long id;
 
+    @NotNull
     @Column(unique = true, nullable = false)
     private String swiftCode;
 
+    @NotNull
     @Column(nullable = false)
     private String name;
 
@@ -28,6 +31,7 @@ public class Bank {
     @JoinColumn(name = "country_id", nullable = false)
     private Country country;
 
+    @NotNull
     @Column(nullable = false)
     private boolean isHeadquarter;
 
