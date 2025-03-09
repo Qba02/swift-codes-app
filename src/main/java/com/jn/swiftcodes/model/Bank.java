@@ -24,6 +24,7 @@ public class Bank {
     @Column(nullable = false)
     private String name;
 
+    @NotNull
     @Column(nullable = false)
     private String address;
 
