@@ -9,10 +9,12 @@ import com.jn.swiftcodes.repository.BankRepository;
 import com.jn.swiftcodes.repository.CountryRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BankService {
@@ -44,7 +46,28 @@ public class BankService {
         return mapToCountrySwiftCodes(country, bankRepository.findByCountry_Id(country.getId()));
     }
 
+    @Transactional
+    public MessageResponseDto deleteBank(String swiftCode){
+        Bank bank = bankRepository.findBySwiftCode(swiftCode)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format(ErrorMessages.BANK_DONT_EXISTS, swiftCode)));
+
+        List<Bank> branches = bankRepository.findByHeadquarters(bank);
+        branches.forEach(branch -> branch.setHeadquarters(null));
+        bankRepository.saveAll(branches);
+
+        bankRepository.delete(bank);
+        return new MessageResponseDto(String.format(SuccessMessages.BANK_DELETED, swiftCode));
+    }
+
+    @Transactional
     public MessageResponseDto saveBankEntry(BankDto bank) {
+        Country country = validateBankEntryData(bank);
+        return saveBank(bank, country);
+    }
+
+
+    private Country validateBankEntryData(BankDto bank) {
         Country country = countryRepository.findCountryByIso2(bank.countryISO2())
                 .orElseThrow(() -> new EntityNotFoundException(
                         String.format(ErrorMessages.COUNTRY_NOT_FOUND, bank.countryISO2())
@@ -57,26 +80,15 @@ public class BankService {
                     );
                 });
 
-        validateBankEntryData(bank, country);
-        return saveBank(bank, country);
-    }
-
-    public MessageResponseDto deleteBank(String swiftCode){
-        Bank bank = bankRepository.findBySwiftCode(swiftCode)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format(ErrorMessages.BANK_DONT_EXISTS, swiftCode)));
-        bankRepository.delete(bank);
-        return new MessageResponseDto(String.format(SuccessMessages.BANK_DELETED, swiftCode));
-    }
-
-    private static void validateBankEntryData(BankDto bank, Country country) {
         if (!country.getName().equals(bank.countryName())) {
             throw new IllegalArgumentException(ErrorMessages.COUNTRY_NAME_MISMATCH);
         }
         if (bank.swiftCode().endsWith("XXX") != bank.isHeadquarter()) {
             throw new IllegalArgumentException(ErrorMessages.SWIFT_CODE_HEADQUARTER_MISMATCH);
         }
+        return country;
     }
+
 
     private MessageResponseDto saveBank(BankDto bank, Country country) {
 
@@ -94,7 +106,22 @@ public class BankService {
                 .build();
 
         bankRepository.save(newBank);
+        updateBranchesHeadquarterField(newBank);
         return new MessageResponseDto(String.format(SuccessMessages.BANK_SAVED, bank.swiftCode()));
+    }
+
+    private void updateBranchesHeadquarterField(Bank newBank) {
+        if (newBank.isHeadquarter()) {
+            List<Bank> branchesToUpdate = bankRepository.findBySwiftCodeStartsWith(
+                            newBank.getSwiftCode().substring(0, 8))
+                    .stream()
+                    .filter(branch -> branch.getHeadquarters() == null)
+                    .filter(branch -> !branch.getSwiftCode().equals(newBank.getSwiftCode()))
+                    .toList();
+
+            branchesToUpdate.forEach(branch -> branch.setHeadquarters(newBank));
+            bankRepository.saveAll(branchesToUpdate);
+        }
     }
 
     private CountrySwiftCodesDto mapToCountrySwiftCodes(Country country, List<Bank> banks){

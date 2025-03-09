@@ -13,6 +13,7 @@ public interface BankRepository extends JpaRepository<Bank, Long> {
     Optional<Bank> findBySwiftCode(String swiftCode);
     @Query("SELECT b FROM Bank b WHERE b.swiftCode LIKE CONCAT(:prefix, '%', :suffix)")
     Bank findBySwiftCodeStartsWithAndEndsWith(@Param("prefix") String prefix, @Param("suffix") String suffix);
+    List<Bank> findBySwiftCodeStartsWith(String prefix);
     List<Bank> findByHeadquarters(Bank headquarters);
     List<Bank> findByCountry_Id(Long countryId);
 }
