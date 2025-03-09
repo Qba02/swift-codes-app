@@ -1,6 +1,5 @@
 package com.jn.swiftcodes.dto;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -24,6 +23,6 @@ public record BankDto (
         Boolean isHeadquarter,
         @NotNull(message = "SWIFT code is required")
         @NotBlank(message = "SWIFT code is required")
-        @Min(value = 8, message = "SWIFT code must be at least 8 characters long")
+        @Size(min = 8, message = "SWIFT code must be at least 8 characters long")
         String swiftCode
 ) implements BankDetailsInterface {}
