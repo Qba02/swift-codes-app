@@ -5,6 +5,7 @@ import com.jn.swiftcodes.model.Bank;
 import com.jn.swiftcodes.model.Country;
 import com.jn.swiftcodes.repository.BankRepository;
 import com.jn.swiftcodes.repository.CountryRepository;
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public class BankService {
 
     public BankDetailsInterface getBankDetails(String swiftCode){
         Bank bank = bankRepository.findBySwiftCode(swiftCode)
-                .orElseThrow(() -> new EntityNotFoundException("Bank not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Bank with SWIFT code: " + swiftCode +" not found"));
 
         if(bank.isHeadquarter()){
             return mapToHeadquarter(bank, bankRepository.findByHeadquarters(bank));
@@ -35,7 +36,7 @@ public class BankService {
 
     public CountrySwiftCodesDto getBanksByCountry(String countryIso2Code){
         Country country = countryRepository.findCountryByIso2(countryIso2Code)
-                .orElseThrow(() -> new EntityNotFoundException("Country not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Country with ISO2 code:"+ countryIso2Code +" not found"));
         return mapToCountrySwiftCodes(country, bankRepository.findByCountry_Id(country.getId()));
     }
 
@@ -43,12 +44,12 @@ public class BankService {
         Country country = countryRepository.findCountryByIso2(bank.countryISO2())
                 .orElseThrow(() -> new EntityNotFoundException("Country ISO2 not found - cannot add bank entry"));
 
-        if (bankRepository.findBySwiftCode(bank.swiftCode()).isPresent()) {
-            throw new IllegalArgumentException("Bank with SWIFT code: " + bank.swiftCode() + " already exists.");
-        }
-        if (!country.getName().equals(bank.countryName())) {
-            throw new IllegalArgumentException("Country with provided ISO2 found, but country name does not match.");
-        }
+        bankRepository.findBySwiftCode(bank.swiftCode())
+                .ifPresent(existingBank -> {
+                    throw new EntityExistsException("Bank with SWIFT code: " + existingBank.getSwiftCode() + " already exists.");
+                });
+
+        validateBankEntryData(bank, country);
         return saveBank(bank, country);
     }
 
@@ -60,11 +61,22 @@ public class BankService {
         return new MessageResponseDto("Successfully removed bank with SWIFT code: " + swiftCode);
     }
 
+    private static void validateBankEntryData(BankDto bank, Country country) {
+        if (!country.getName().equals(bank.countryName())) {
+            throw new IllegalArgumentException("Country with provided ISO2 found, but country name does not match.");
+        }
+        if (bank.swiftCode().endsWith("XXX") != bank.isHeadquarter()) {
+            throw new IllegalArgumentException(
+                    "Invalid SWIFT code and headquarters status combination: "
+                            + "Banks with SWIFT code ending with 'XXX' must have isHeadquarter = true, "
+                            + "while branches must have isHeadquarter = false.");
+        }
+    }
+
     private MessageResponseDto saveBank(BankDto bank, Country country) {
 
         Bank headquarters = bank.isHeadquarter() ? null
                 : bankRepository.findBySwiftCodeStartsWith(bank.swiftCode().substring(0, 8));
-//                .orElseThrow(() -> new EntityNotFoundException("No headquarters found for branch"));
 
         Bank newBank = Bank.builder()
                 .country(country)
