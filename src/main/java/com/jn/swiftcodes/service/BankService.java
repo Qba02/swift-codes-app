@@ -81,7 +81,8 @@ public class BankService {
     private MessageResponseDto saveBank(BankDto bank, Country country) {
 
         Bank headquarters = bank.isHeadquarter() ? null
-                : bankRepository.findBySwiftCodeStartsWith(bank.swiftCode().substring(0, 8));
+                : bankRepository.findBySwiftCodeStartsWithAndEndsWith(
+                        bank.swiftCode().substring(0, 8), "XXX");
 
         Bank newBank = Bank.builder()
                 .country(country)
