@@ -215,3 +215,6 @@ DELETE: /v1/swift-codes/{swift-code}
     "message": string
 }
 ```
+
+### Credits
+Badges are from [md-badges](https://github.com/inttter/md-badges), MIT license.
